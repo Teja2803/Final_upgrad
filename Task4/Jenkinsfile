@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+
+    environment {
+        GIT_REPO = 'https://github.com/Teja2803/Final_upgrad.git'
+        GIT_BRANCH = 'main'
+        AWS_SERVER = 'ubuntu@18.209.104.46'
+        AZURE_SERVER = 'ubuntu@18.209.104.46'
+        AZURE_PASSWORD = credentials('azure-ssh-password-id')
+    }
+
+    stages {
+        stage('Checkout HTML Files') {
+            steps {
+                git branch: "${GIT_BRANCH}", url: "${GIT_REPO}"
+            }
+        }
+        stage('Deploy to AWS') {
+            steps {
+                sshagent(['aws-ssh-key-credentials-id']) {
+                    sh """
+                        scp -o StrictHostKeyChecking=no index-aws.html ${AWS_SERVER}:/tmp/index-aws.html
+                        ssh -o StrictHostKeyChecking=no ${AWS_SERVER} 'sudo mv /tmp/index-aws.html /var/www/html/index.html && sudo systemctl restart nginx'
+                    """
+                }
+            }
+        }
+        stage('Deploy to Azure') {
+            steps {
+                sh '''
+                sshpass -p "$AZURE_PASSWORD" scp -o StrictHostKeyChecking=no index-azure.html ${AZURE_SERVER}:/tmp/index-azure.html
+                sshpass -p "$AZURE_PASSWORD" ssh -o StrictHostKeyChecking=no ${AZURE_SERVER} 'sudo mv /tmp/index-azure.html /var/www/html/index.html && sudo systemctl restart nginx'
+                '''
+            }
+        }
+    }
+}

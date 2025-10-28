@@ -29,7 +29,7 @@ resource "aws_internet_gateway" "igw" {
 }
 
 resource "aws_eip" "nat" {
-  # No "vpc = true" needed in recent Terraform AWS provider
+  # No 'vpc = true'
 }
 
 resource "aws_nat_gateway" "nat" {
@@ -94,16 +94,6 @@ resource "aws_security_group" "allow_ssh_http" {
   }
 }
 
-resource "tls_private_key" "example" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
-
-resource "aws_key_pair" "deployer" {
-  key_name   = "deployer-key"
-  public_key = tls_private_key.example.public_key_openssh
-}
-
 data "aws_ami" "ubuntu" {
   most_recent = true
   filter {
@@ -118,24 +108,19 @@ data "aws_ami" "ubuntu" {
 }
 
 resource "aws_instance" "app_machine" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = "t3.micro"
-  subnet_id     = aws_subnet.public[0].id
-  key_name      = aws_key_pair.deployer.key_name
-  vpc_security_group_ids = [aws_security_group.allow_ssh_http.id]
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = "t3.micro"
+  subnet_id                   = aws_subnet.public[0].id
+  key_name                    = "bastion" # Existing key pair name in AWS
+  vpc_security_group_ids      = [aws_security_group.allow_ssh_http.id]
   tags = { Name = "App Machine" }
 }
 
 resource "aws_instance" "tools_machine" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = "t3.micro"
-  subnet_id     = aws_subnet.public[1].id
-  key_name      = aws_key_pair.deployer.key_name
-  vpc_security_group_ids = [aws_security_group.allow_ssh_http.id]
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = "t3.micro"
+  subnet_id                   = aws_subnet.public[1].id
+  key_name                    = "bastion"
+  vpc_security_group_ids      = [aws_security_group.allow_ssh_http.id]
   tags = { Name = "Tools Machine" }
-}
-
-output "private_key" {
-  value     = tls_private_key.example.private_key_pem
-  sensitive = true
 }

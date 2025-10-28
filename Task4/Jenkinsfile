@@ -5,7 +5,7 @@ pipeline {
         GIT_REPO = 'https://github.com/Teja2803/Final_upgrad.git'
         GIT_BRANCH = 'main'
         AWS_SERVER = 'ubuntu@18.209.104.46'
-        AZURE_SERVER = 'ubuntu@18.209.104.46'
+        AZURE_SERVER = 'ubuntu@52.224.56.69'
         AZURE_PASSWORD = credentials('azure-ssh-password-id')
     }
 
@@ -27,10 +27,13 @@ pipeline {
         }
         stage('Deploy to Azure') {
             steps {
+                withCredentials([string(credentialsId: 'azure-ssh-password-id', variable: 'AZURE_PASSWORD')]) {
                 sh '''
-                sshpass -p "$AZURE_PASSWORD" scp -o StrictHostKeyChecking=no Task4/files/index-azure.html ${AZURE_SERVER}:/tmp/index-azure.html
-                sshpass -p "$AZURE_PASSWORD" ssh -o StrictHostKeyChecking=no ${AZURE_SERVER} 'sudo mv /tmp/index-azure.html /var/www/html/index.html && sudo systemctl restart nginx'
+                    sh 'echo "Password length: ${#AZURE_PASSWORD}"'
+                    sshpass -p "$AZURE_PASSWORD" scp -o StrictHostKeyChecking=no Task4/files/index-azure.html ubuntu@52.224.56.69:/tmp/index-azure.html
+                    sshpass -p "$AZURE_PASSWORD" ssh -o StrictHostKeyChecking=no ubuntu@52.224.56.69 'sudo mv /tmp/index-azure.html /var/www/html/index.html && sudo systemctl restart nginx'
                 '''
+                }
             }
         }
     }

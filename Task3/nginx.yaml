@@ -1,0 +1,29 @@
+- name: Deploy customized index.html on AWS and Azure machines
+  hosts: all
+  become: yes
+  vars:
+    # Define cloud type per host group or inventory variables
+    cloud: "{{ 'aws' if 'aws' in group_names else 'azure' }}"
+
+  tasks:
+    - name: Copy customized index.html for each cloud
+      copy:
+        src: "index-{{ cloud }}.html"
+        dest: /var/www/html/index.html
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Ensure Nginx is configured to serve /var/www/html/index.html
+      lineinfile:
+        path: /etc/nginx/sites-available/default
+        regexp: '^\s*index\s'
+        line: '    index index.html;'
+        state: present
+      notify: Restart nginx
+
+  handlers:
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted

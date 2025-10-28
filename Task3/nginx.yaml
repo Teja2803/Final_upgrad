@@ -1,8 +1,8 @@
-- name: Deploy customized index.html on AWS and Azure machines
+- name: Deploy customized Nginx pages on AWS and Azure
   hosts: all
   become: yes
   vars:
-    # Define cloud type per host group or inventory variables
+    # Detect cloud based on group membership
     cloud: "{{ 'aws' if 'aws' in group_names else 'azure' }}"
 
   tasks:
@@ -14,7 +14,13 @@
         group: root
         mode: '0644'
 
-    - name: Ensure Nginx is configured to serve /var/www/html/index.html
+    - name: Ensure Nginx is installed
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Ensure Nginx config serves /var/www/html/index.html
       lineinfile:
         path: /etc/nginx/sites-available/default
         regexp: '^\s*index\s'

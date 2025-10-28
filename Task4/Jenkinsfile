@@ -19,7 +19,7 @@ pipeline {
             steps {
                 sshagent(['aws-ssh-key-credentials-id']) {
                     sh """
-                        scp -o StrictHostKeyChecking=no index-aws.html ${AWS_SERVER}:/tmp/index-aws.html
+                        scp -o StrictHostKeyChecking=no Task4/files/index-aws.html ${AWS_SERVER}:/tmp/index-aws.html
                         ssh -o StrictHostKeyChecking=no ${AWS_SERVER} 'sudo mv /tmp/index-aws.html /var/www/html/index.html && sudo systemctl restart nginx'
                     """
                 }
@@ -28,7 +28,7 @@ pipeline {
         stage('Deploy to Azure') {
             steps {
                 sh '''
-                sshpass -p "$AZURE_PASSWORD" scp -o StrictHostKeyChecking=no index-azure.html ${AZURE_SERVER}:/tmp/index-azure.html
+                sshpass -p "$AZURE_PASSWORD" scp -o StrictHostKeyChecking=no Task4/files/index-azure.html ${AZURE_SERVER}:/tmp/index-azure.html
                 sshpass -p "$AZURE_PASSWORD" ssh -o StrictHostKeyChecking=no ${AZURE_SERVER} 'sudo mv /tmp/index-azure.html /var/www/html/index.html && sudo systemctl restart nginx'
                 '''
             }

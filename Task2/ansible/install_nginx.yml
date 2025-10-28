@@ -3,6 +3,9 @@
   hosts: webservers
   become: yes
   tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
 
     - name: Install Nginx web server
       ansible.builtin.apt:

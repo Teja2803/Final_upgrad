@@ -1,14 +1,24 @@
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~>3.0"
+    }
+  }
+}
+
 provider "azurerm" {
   features {}
+  subscription_id = "57e0f2d3-3426-4aee-b05c-2a3debdeacf8"  # Your Subscription ID
 }
 
 resource "azurerm_resource_group" "rg" {
-  name     = "example-rg"
+  name     = "upgrad-rg"
   location = "East US"
 }
 
 resource "azurerm_virtual_network" "vnet" {
-  name                = "example-vnet"
+  name                = "upgrad-vnet"
   address_space       = ["10.0.0.0/16"]
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
@@ -29,7 +39,7 @@ resource "azurerm_subnet" "private" {
 }
 
 resource "azurerm_network_security_group" "nsg" {
-  name                = "example-nsg"
+  name                = "upgrad-nsg"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 
@@ -58,7 +68,7 @@ resource "azurerm_network_security_group" "nsg" {
   }
 }
 
-resource "azurerm_subnet_network_security_group_association" "public_nsg_assoc" {
+resource "azurerm_subnet_network_security_group_association" "assoc" {
   subnet_id                 = azurerm_subnet.public.id
   network_security_group_id = azurerm_network_security_group.nsg.id
 }
@@ -107,7 +117,7 @@ resource "azurerm_virtual_machine" "app_vm" {
   os_profile {
     computer_name  = "appvm"
     admin_username = "azureuser"
-    admin_password = "Password1234!"  # For production, use SSH keys or secure methods
+    admin_password = "Password1234!"
   }
 
   os_profile_linux_config {
@@ -115,7 +125,7 @@ resource "azurerm_virtual_machine" "app_vm" {
   }
 
   tags = {
-    environment = "dev"
+    environment = "upgrad"
   }
 }
 
@@ -171,6 +181,6 @@ resource "azurerm_virtual_machine" "tools_vm" {
   }
 
   tags = {
-    environment = "dev"
+    environment = "upgrad"
   }
 }

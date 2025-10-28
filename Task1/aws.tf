@@ -7,7 +7,6 @@ resource "aws_vpc" "main" {
   tags = { Name = "main-vpc" }
 }
 
-# Subnets
 resource "aws_subnet" "public" {
   count      = 2
   vpc_id     = aws_vpc.main.id
@@ -25,13 +24,12 @@ resource "aws_subnet" "private" {
   tags = { Name = "private-${count.index}" }
 }
 
-# Internet Gateway and NAT Gateway
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.main.id
 }
 
 resource "aws_eip" "nat" {
-  vpc = true
+  # No "vpc = true" needed in recent Terraform AWS provider
 }
 
 resource "aws_nat_gateway" "nat" {
@@ -39,7 +37,6 @@ resource "aws_nat_gateway" "nat" {
   subnet_id     = aws_subnet.public[0].id
 }
 
-# Route Tables
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
   route {
@@ -70,7 +67,6 @@ resource "aws_route_table_association" "private_subnet" {
   route_table_id = aws_route_table.private.id
 }
 
-# Security Group
 resource "aws_security_group" "allow_ssh_http" {
   name        = "allow_ssh_http"
   description = "Allow 22 and 80 from everywhere"
@@ -98,7 +94,6 @@ resource "aws_security_group" "allow_ssh_http" {
   }
 }
 
-# Key Pair
 resource "tls_private_key" "example" {
   algorithm = "RSA"
   rsa_bits  = 4096
@@ -109,9 +104,21 @@ resource "aws_key_pair" "deployer" {
   public_key = tls_private_key.example.public_key_openssh
 }
 
-# EC2 Instances (Ubuntu)
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-*-amd64-server-*"]
+  }
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+  owners = ["099720109477"] # Canonical
+}
+
 resource "aws_instance" "app_machine" {
-  ami           = "ami-0c94855ba95c71c99" # Example: Ubuntu 18.04 us-east-1
+  ami           = data.aws_ami.ubuntu.id
   instance_type = "t3.micro"
   subnet_id     = aws_subnet.public[0].id
   key_name      = aws_key_pair.deployer.key_name
@@ -120,7 +127,7 @@ resource "aws_instance" "app_machine" {
 }
 
 resource "aws_instance" "tools_machine" {
-  ami           = "ami-0c94855ba95c71c99"
+  ami           = data.aws_ami.ubuntu.id
   instance_type = "t3.micro"
   subnet_id     = aws_subnet.public[1].id
   key_name      = aws_key_pair.deployer.key_name

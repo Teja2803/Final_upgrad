@@ -29,7 +29,7 @@ resource "aws_internet_gateway" "igw" {
 }
 
 resource "aws_eip" "nat" {
-  # No 'vpc = true'
+  # No 'vpc' argument here
 }
 
 resource "aws_nat_gateway" "nat" {
@@ -69,7 +69,7 @@ resource "aws_route_table_association" "private_subnet" {
 
 resource "aws_security_group" "allow_ssh_http" {
   name        = "allow_ssh_http"
-  description = "Allow 22 and 80 from everywhere"
+  description = "Allow SSH and HTTP from anywhere"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -94,33 +94,20 @@ resource "aws_security_group" "allow_ssh_http" {
   }
 }
 
-data "aws_ami" "ubuntu" {
-  most_recent = true
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-*-amd64-server-*"]
-  }
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-  owners = ["099720109477"] # Canonical
-}
-
 resource "aws_instance" "app_machine" {
-  ami                         = data.aws_ami.ubuntu.id
-  instance_type               = "t3.micro"
-  subnet_id                   = aws_subnet.public[0].id
-  key_name                    = "bastion" # Existing key pair name in AWS
-  vpc_security_group_ids      = [aws_security_group.allow_ssh_http.id]
+  ami                    = "ami-0360c520857e3138f" # fixed AMI you provided
+  instance_type          = "t2.medium"
+  subnet_id              = aws_subnet.public[0].id
+  key_name               = "bastion" # existing key pair name
+  vpc_security_group_ids = [aws_security_group.allow_ssh_http.id]
   tags = { Name = "App Machine" }
 }
 
 resource "aws_instance" "tools_machine" {
-  ami                         = data.aws_ami.ubuntu.id
-  instance_type               = "t3.micro"
-  subnet_id                   = aws_subnet.public[1].id
-  key_name                    = "bastion"
-  vpc_security_group_ids      = [aws_security_group.allow_ssh_http.id]
+  ami                    = "ami-0360c520857e3138f" # fixed AMI
+  instance_type          = "t2.medium"
+  subnet_id              = aws_subnet.public[1].id
+  key_name               = "bastion"
+  vpc_security_group_ids = [aws_security_group.allow_ssh_http.id]
   tags = { Name = "Tools Machine" }
 }
